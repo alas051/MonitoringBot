@@ -418,14 +418,35 @@ resource_history = {
 }
 
 async def collect_daily_data():
-    """ جمع‌آوری اطلاعات منابع سرور هر ۵ دقیقه یک بار و مقداردهی اولیه هنگام شروع """
-
-    # مقداردهی اولیه هنگام شروع
-    record_initial_resource_data()
+    """ جمع‌آوری داده‌های منابع سرور هر ۵ دقیقه یک بار و ذخیره میانگین """
+    
+    print("📊 Collecting daily resource data...")  # لاگ برای بررسی
     
     while True:
-        await asyncio.sleep(300)  # 5 دقیقه (300 ثانیه)
-        record_initial_resource_data()
+        cpu_samples = []
+        memory_samples = []
+        disk_samples = []
+        
+        for _ in range(5):  # هر ۵ ثانیه یک داده گرفته و میانگین می‌گیریم (۵ نمونه در ۵ دقیقه)
+            cpu_samples.append(psutil.cpu_percent(interval=1))
+            memory_samples.append(psutil.virtual_memory().percent)
+            disk_samples.append(psutil.disk_usage('/').percent)
+            await asyncio.sleep(60)  # هر دقیقه یک مقدار بگیر
+
+        # میانگین‌گیری از ۵ نمونه
+        avg_cpu = sum(cpu_samples) / len(cpu_samples)
+        avg_memory = sum(memory_samples) / len(memory_samples)
+        avg_disk = sum(disk_samples) / len(disk_samples)
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        # ذخیره در تاریخچه
+        resource_history["cpu"].append(avg_cpu)
+        resource_history["memory"].append(avg_memory)
+        resource_history["disk"].append(avg_disk)
+        resource_history["timestamps"].append(timestamp)
+        
+        print(f"✅ Data saved: {timestamp} - CPU: {avg_cpu:.2f}%, Memory: {avg_memory:.2f}%, Disk: {avg_disk:.2f}%")
+
 
 def record_initial_resource_data():
     """ ثبت اولین مقدار در تاریخچه منابع سرور (اگر خالی باشد) """
@@ -444,8 +465,8 @@ def record_initial_resource_data():
         
         print(f"✅ Initial resource data recorded: CPU={cpu}%, Memory={memory}%, Disk={disk}%")
 
-import os
 
+import os
 def generate_daily_report_csv():
     """ تولید گزارش روزانه و جلوگیری از CSV خالی """
 
@@ -453,19 +474,14 @@ def generate_daily_report_csv():
     csv_filename = "server_daily_report.csv"
     csv_path = os.path.join(report_dir, csv_filename)  # ترکیب مسیر و نام فایل
 
-    # بررسی و مقداردهی اولیه
-    if not resource_history["cpu"]:
+    if not resource_history["cpu"]:  # اگر داده‌ای وجود ندارد، مقداردهی اولیه انجام شود
         print("⚠️ No data found, recording initial resource data...")
-        record_initial_resource_data()
-
-    if len(resource_history["cpu"]) < 5:
-        print("⚠️ Not enough data for report! Need at least 5 data points.")
         return None  # جلوگیری از ارسال فایل خالی
 
-    # محاسبه میانگین منابع
-    avg_cpu = sum(resource_history["cpu"]) / len(resource_history["cpu"])
-    avg_memory = sum(resource_history["memory"]) / len(resource_history["memory"])
-    avg_disk = sum(resource_history["disk"]) / len(resource_history["disk"])
+    # میانگین داده‌های ذخیره‌شده در تاریخچه
+    avg_cpu = sum(resource_history["cpu"]) / len(resource_history["cpu"]) if resource_history["cpu"] else psutil.cpu_percent()
+    avg_memory = sum(resource_history["memory"]) / len(resource_history["memory"]) if resource_history["memory"] else psutil.virtual_memory().percent
+    avg_disk = sum(resource_history["disk"]) / len(resource_history["disk"]) if resource_history["disk"] else psutil.disk_usage('/').percent
 
     # ایجاد DataFrame برای منابع
     df_resources = pd.DataFrame({
@@ -488,6 +504,7 @@ def generate_daily_report_csv():
     print(f"📄 Daily report generated successfully at {csv_path}")
     return csv_path  # مسیر کامل فایل را برمی‌گرداند
 
+
 async def send_daily_report(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """ ارسال گزارش روزانه در قالب فایل CSV به ادمین """
 
@@ -497,14 +514,27 @@ async def send_daily_report(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.callback_query.answer("⏳ Generating report...", show_alert=False)
 
+    if len(resource_history["cpu"]) < 1:  # اگر هنوز هیچ داده ۵ دقیقه‌ای ثبت نشده باشد
+        cpu_now = psutil.cpu_percent(interval=1)
+        mem_now = psutil.virtual_memory().percent
+        disk_now = psutil.disk_usage('/').percent
+        text = (
+            "⚠️ **No historical data available! Sending real-time usage:**\n\n"
+            f"🔹 **CPU Usage:** `{cpu_now:.2f}%`\n"
+            f"🔹 **Memory Usage:** `{mem_now:.2f}%`\n"
+            f"🔹 **Disk Usage:** `{disk_now:.2f}%`\n"
+        )
+        await update.callback_query.message.reply_text(text, parse_mode="Markdown")
+        return
+
     # تولید گزارش CSV
-    csv_path = generate_daily_report_csv()  # حالا مسیر دقیق فایل را دریافت می‌کنیم
+    csv_path = generate_daily_report_csv()
 
     if not csv_path or not os.path.exists(csv_path):
         await update.callback_query.message.reply_text("⚠️ **Report file not found!**\nTry again later.", parse_mode="Markdown")
         return
 
-    print(f"📂 Checking file path: {csv_path}")  # نمایش مسیر برای Debug
+    print(f"📂 Checking file path: {csv_path}")
 
     try:
         # ارسال فایل
@@ -514,8 +544,9 @@ async def send_daily_report(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.callback_query.message.reply_text("✅ **Daily report sent successfully!**", parse_mode="Markdown")
 
     except Exception as e:
-        print(f"⚠️ Error sending file: {e}")  # نمایش خطای دقیق در سرور
+        print(f"⚠️ Error sending file: {e}")
         await update.callback_query.message.reply_text(f"❌ **Failed to send report:** {str(e)}", parse_mode="Markdown")
+
 
 
 ######################################### File management  ###################################
