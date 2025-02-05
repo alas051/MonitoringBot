@@ -421,54 +421,50 @@ resource_history = {
     "disk": deque(maxlen=288),
     "timestamps": deque(maxlen=288)  # برای ذخیره زمان هر اندازه‌گیری
 }
-
 async def collect_daily_data():
-    """ جمع‌آوری داده‌های منابع سرور هر ۵ دقیقه یک بار و ذخیره میانگین """
-    
-    print("📊 Collecting daily resource data...")  # لاگ برای بررسی
-    
-    while True:
-        cpu_samples = []
-        memory_samples = []
-        disk_samples = []
-        
-        for _ in range(5):  # هر ۵ ثانیه یک داده گرفته و میانگین می‌گیریم (۵ نمونه در ۵ دقیقه)
-            cpu_samples.append(psutil.cpu_percent(interval=1))
-            memory_samples.append(psutil.virtual_memory().percent)
-            disk_samples.append(psutil.disk_usage('/').percent)
-            await asyncio.sleep(60)  # هر دقیقه یک مقدار بگیر
+    """ جمع‌آوری داده‌های منابع سرور هر ۵ دقیقه یک بار """
+    print("📊 Collecting daily resource data...")
 
-        # میانگین‌گیری از ۵ نمونه
-        avg_cpu = sum(cpu_samples) / len(cpu_samples)
-        avg_memory = sum(memory_samples) / len(memory_samples)
-        avg_disk = sum(disk_samples) / len(disk_samples)
+    while True:
+        # مقداردهی مستقیم بدون نیاز به حلقه
+        cpu_samples = [psutil.cpu_percent(interval=1)]
+        memory_samples = [psutil.virtual_memory().percent]
+        disk_samples = [psutil.disk_usage('/').percent]
+
+        # بررسی لیست‌های خالی برای جلوگیری از تقسیم بر صفر
+        avg_cpu = sum(cpu_samples) / len(cpu_samples) if cpu_samples else psutil.cpu_percent(interval=1)
+        avg_memory = sum(memory_samples) / len(memory_samples) if memory_samples else psutil.virtual_memory().percent
+        avg_disk = sum(disk_samples) / len(disk_samples) if disk_samples else psutil.disk_usage('/').percent
+        
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # ذخیره در تاریخچه
+        # ذخیره داده‌ها در تاریخچه
         resource_history["cpu"].append(avg_cpu)
         resource_history["memory"].append(avg_memory)
         resource_history["disk"].append(avg_disk)
         resource_history["timestamps"].append(timestamp)
-        
+
         print(f"✅ Data saved: {timestamp} - CPU: {avg_cpu:.2f}%, Memory: {avg_memory:.2f}%, Disk: {avg_disk:.2f}%")
 
+        await asyncio.sleep(300)  # هر ۵ دقیقه یک بار اجرا شود
 
-def record_initial_resource_data():
-    """ ثبت اولین مقدار در تاریخچه منابع سرور (اگر خالی باشد) """
-    if not resource_history["cpu"]:  # اگر خالی است، مقداردهی اولیه کن
-        print("✅ Recording initial resource data...")
-        for _ in range(5):  # ذخیره ۵ مقدار در بازه ۱۰ ثانیه‌ای
-            cpu = psutil.cpu_percent(interval=2)
-            memory = psutil.virtual_memory().percent
-            disk = psutil.disk_usage('/').percent
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            resource_history["cpu"].append(cpu)
-            resource_history["memory"].append(memory)
-            resource_history["disk"].append(disk)
-            resource_history["timestamps"].append(timestamp)
+# def record_initial_resource_data():
+#     """ ثبت اولین مقدار در تاریخچه منابع سرور (اگر خالی باشد) """
+#     if not resource_history["cpu"]:  # اگر خالی است، مقداردهی اولیه کن
+#         print("✅ Recording initial resource data...")
+#         for _ in range(5):  # ذخیره ۵ مقدار در بازه ۱۰ ثانیه‌ای
+#             cpu = psutil.cpu_percent(interval=2)
+#             memory = psutil.virtual_memory().percent
+#             disk = psutil.disk_usage('/').percent
+#             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+#             resource_history["cpu"].append(cpu)
+#             resource_history["memory"].append(memory)
+#             resource_history["disk"].append(disk)
+#             resource_history["timestamps"].append(timestamp)
         
-        print(f"✅ Initial resource data recorded: CPU={cpu}%, Memory={memory}%, Disk={disk}%")
+#         print(f"✅ Initial resource data recorded: CPU={cpu}%, Memory={memory}%, Disk={disk}%")
 
 
 import os
@@ -1266,14 +1262,14 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
-async def collect_data():
-    print("📊 Collecting daily resource data...")  # 👈 این خط را اضافه کنید
-    while True:
-        async with lock:
-            cpu_data.append(psutil.cpu_percent(interval=1))
-            memory_data.append(psutil.virtual_memory().percent)
-            disk_data.append(psutil.disk_usage('/').percent)
-        await asyncio.sleep(1)
+# async def collect_data():
+#     print("📊 Collecting daily resource data...")  # 👈 این خط را اضافه کنید
+#     while True:
+#         async with lock:
+#             cpu_data.append(psutil.cpu_percent(interval=1))
+#             memory_data.append(psutil.virtual_memory().percent)
+#             disk_data.append(psutil.disk_usage('/').percent)
+#         await asyncio.sleep(1)
 
 
 async def check_alerts(app: Application):
@@ -1338,7 +1334,7 @@ def main():
 
     # Background tasks
     loop = asyncio.get_event_loop()
-    loop.create_task(collect_data())  # اجرای جمع‌آوری داده‌ها
+    #loop.create_task(collect_data())  # اجرای جمع‌آوری داده‌ها
     loop.create_task(check_alerts(application))  # اجرای بررسی هشدارها
     loop.create_task(collect_daily_data())  # اجرای جمع‌آوری داده‌های ۲۴ ساعت اخیر #daily report
     
