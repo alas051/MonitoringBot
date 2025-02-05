@@ -444,31 +444,35 @@ def record_initial_resource_data():
         
         print(f"✅ Initial resource data recorded: CPU={cpu}%, Memory={memory}%, Disk={disk}%")
 
-
 import os
 
 def generate_daily_report_csv():
     """ تولید گزارش روزانه و جلوگیری از CSV خالی """
 
-    # اگر هنوز داده‌ای ذخیره نشده است، مقدار لحظه‌ای سیستم را ثبت کن
+    report_dir = "/root/alertBot/project"  # مسیر دقیق ذخیره فایل
+    csv_filename = "server_daily_report.csv"
+    csv_path = os.path.join(report_dir, csv_filename)  # ترکیب مسیر و نام فایل
+
+    # بررسی و مقداردهی اولیه
+    if not resource_history["cpu"]:
+        print("⚠️ No data found, recording initial resource data...")
+        record_initial_resource_data()
+
     if len(resource_history["cpu"]) < 5:
         print("⚠️ Not enough data for report! Need at least 5 data points.")
         return None  # جلوگیری از ارسال فایل خالی
 
     # محاسبه میانگین منابع
-    avg_cpu = sum(resource_history["cpu"]) / len(resource_history["cpu"]) if resource_history["cpu"] else psutil.cpu_percent()
-    avg_memory = sum(resource_history["memory"]) / len(resource_history["memory"]) if resource_history["memory"] else psutil.virtual_memory().percent
-    avg_disk = sum(resource_history["disk"]) / len(resource_history["disk"]) if resource_history["disk"] else psutil.disk_usage('/').percent
-
-    # جمع‌آوری وضعیت سرویس‌ها
-    service_data = [{"Service": srv, "Status": get_service_status(srv)} for srv in services]
+    avg_cpu = sum(resource_history["cpu"]) / len(resource_history["cpu"])
+    avg_memory = sum(resource_history["memory"]) / len(resource_history["memory"])
+    avg_disk = sum(resource_history["disk"]) / len(resource_history["disk"])
 
     # ایجاد DataFrame برای منابع
     df_resources = pd.DataFrame({
         "Metric": ["Avg CPU Usage (%)", "Avg Memory Usage (%)", "Avg Disk Usage (%)"],
         "Value": [avg_cpu, avg_memory, avg_disk]
     })
-
+    
     # داده‌های تاریخچه
     df_history = pd.DataFrame({
         "Timestamp": list(resource_history["timestamps"]),
@@ -477,29 +481,15 @@ def generate_daily_report_csv():
         "Disk Usage (%)": list(resource_history["disk"])
     })
 
-    # ایجاد DataFrame برای وضعیت سرویس‌ها
-    df_services = pd.DataFrame(service_data)
+    # ذخیره CSV
+    df_resources.to_csv(csv_path, index=False)
+    df_history.to_csv(csv_path, index=False, mode='a')  # Append historical data
 
-    # ذخیره به عنوان CSV
-    csv_filename = "server_daily_report.csv"
-    with open(csv_filename, 'w', encoding="utf-8") as f:
-        df_resources.to_csv(f, index=False)
-        df_history.to_csv(f, index=False, mode='a')  # Append historical data
-        df_services.to_csv(f, index=False, mode='a')  # Append service data
-
-    # بررسی اینکه آیا داده‌ای در فایل CSV نوشته شده یا نه
-    if os.path.getsize(csv_filename) < 500:
-        print("⚠️ Generated CSV is too small! Skipping file sending.")
-        return None
-
-    print(f"📄 Daily report generated successfully: {csv_filename}")
-    return csv_filename
-
-
-
+    print(f"📄 Daily report generated successfully at {csv_path}")
+    return csv_path  # مسیر کامل فایل را برمی‌گرداند
 
 async def send_daily_report(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """ ارسال گزارش روزانه در قالب فایل CSV """
+    """ ارسال گزارش روزانه در قالب فایل CSV به ادمین """
 
     if update.effective_user.id != ADMIN_USER_ID:
         await update.callback_query.answer("⛔ You are not authorized to request this report.", show_alert=True)
@@ -508,19 +498,24 @@ async def send_daily_report(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.callback_query.answer("⏳ Generating report...", show_alert=False)
 
     # تولید گزارش CSV
-    csv_file = generate_daily_report_csv()
+    csv_path = generate_daily_report_csv()  # حالا مسیر دقیق فایل را دریافت می‌کنیم
 
-    # اگر فایل وجود نداشت، هشدار ارسال شود
-    if not csv_file:
-        await update.callback_query.message.reply_text("⚠️ **Not enough data for daily report!**\nTry again later.", parse_mode="Markdown")
+    if not csv_path or not os.path.exists(csv_path):
+        await update.callback_query.message.reply_text("⚠️ **Report file not found!**\nTry again later.", parse_mode="Markdown")
         return
 
-    # ارسال فایل
-    await context.bot.send_document(chat_id=ADMIN_USER_ID, document=open(csv_file, "rb"), filename=csv_file)
-    await update.callback_query.message.reply_text("✅ **گزارش روزانه سرور ارسال شد!**", parse_mode="Markdown")
+    print(f"📂 Checking file path: {csv_path}")  # نمایش مسیر برای Debug
 
+    try:
+        # ارسال فایل
+        with open(csv_path, "rb") as file:
+            await context.bot.send_document(chat_id=ADMIN_USER_ID, document=file, filename=os.path.basename(csv_path))
 
+        await update.callback_query.message.reply_text("✅ **Daily report sent successfully!**", parse_mode="Markdown")
 
+    except Exception as e:
+        print(f"⚠️ Error sending file: {e}")  # نمایش خطای دقیق در سرور
+        await update.callback_query.message.reply_text(f"❌ **Failed to send report:** {str(e)}", parse_mode="Markdown")
 
 
 ######################################### File management  ###################################
@@ -850,8 +845,13 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 InlineKeyboardButton("⚠️ Alerting", callback_data="alerting_main")
             ],
             [
-                InlineKeyboardButton("🔐 Security", callback_data="security_main")  
-            ]
+                InlineKeyboardButton("🔐 Security", callback_data="security_main"),  
+                InlineKeyboardButton("📄 Daily Report", callback_data="request_daily_report")
+            ],
+            [
+                InlineKeyboardButton("📂 File Management", callback_data="file_management")
+            ]        
+
         ]
 
         # If admin, add "Manage Users" button in a separate row
@@ -1231,6 +1231,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def collect_data():
+    print("📊 Collecting daily resource data...")  # 👈 این خط را اضافه کنید
     while True:
         async with lock:
             cpu_data.append(psutil.cpu_percent(interval=1))
