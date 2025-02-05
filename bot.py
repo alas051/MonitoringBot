@@ -250,20 +250,25 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     welcome_message = (
     "👋 *Welcome to the Server Monitoring Bot!* 🚀\n\n"
-    "I’m here to help you manage and monitor your Linux server effortlessly. "
-    "With me, you can keep an eye on your server’s resources, manage services, "
-    "test your network, and set up alerts to stay ahead of potential issues.\n\n"
+    "I’m here to help you *monitor, manage, and secure* your Linux server effortlessly. "
+    "With me, you can *track system performance, manage services, monitor network health, "
+    "automate alerts, handle files, and generate reports!*\n\n"
+    
     "Here’s what I can do for you:\n"
-    "📊 *Monitor Server Resources*: Track CPU, memory, disk usage, and uptime in real-time.\n"
-    "🛠 *Manage Services*: Start, stop, restart, or check the status of services like MySQL and more.\n"
-    "🌐 *Network Tools*: Perform speed tests and check for packet loss to ensure your network is running smoothly.\n"
-    "⚠️ *Custom Alerts*: Set up notifications for critical resource thresholds (e.g., high CPU or low disk space).\n"
-    "🔐 *Security Monitoring*: Detect and block suspicious login attempts, monitor DDoS attacks, and manage blocked IPs.\n"
-    "⌨️ *Run Linux Commands*: Execute pre-approved system commands remotely.\n\n"
+    "📊 *Monitor Server Resources*: Track **CPU, memory, disk usage, and uptime** in real-time.\n"
+    "🛠 *Manage Services*: Start, stop, restart, or check the status of services like **Nginx, MySQL, and more.**\n"
+    "🌐 *Network Tools*: Run **speed tests**, check **packet loss**, and monitor **network stability.**\n"
+    "⚠️ *Custom Alerts*: Set up notifications for **high CPU usage, low disk space**, and other critical thresholds.\n"
+    "🔐 *Security Monitoring*: Detect and block **suspicious login attempts**, monitor **DDoS attacks**, and manage **blocked IPs.**\n"
+    "📄 *Daily Server Reports*: Receive detailed **CSV reports** of server performance over the last 24 hours.\n"
+    "📂 *File Management*: **Upload, download, and delete** files from your server easily.\n"
+    "⌨️ *Run Linux Commands*: Execute **pre-approved system commands** remotely.\n\n"
+
     "💻 *To run a command, start with* `/cmd`.\n"
     "Example: `/cmd uptime` or `/cmd df -h`\n\n"
     "🔎 *To view the list of available commands, use* `/cmd list`.\n\n"
-    "Use the buttons below to get started, and let’s keep your server in top shape! 💻🔧"
+    
+    "📝 Use the buttons below to get started and keep your server in top shape! 💻🔧"
 )
 
 
