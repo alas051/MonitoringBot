@@ -1261,6 +1261,16 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data['awaiting_ddos_threshold'] = False
 
 
+async def collect_data():
+    """ جمع‌آوری داده‌های لحظه‌ای برای نمودارهای ۶۰ ثانیه‌ای """
+    print("📊 Collecting real-time resource data...")
+    while True:
+        async with lock:
+            cpu_data.append(psutil.cpu_percent(interval=1))
+            memory_data.append(psutil.virtual_memory().percent)
+            disk_data.append(psutil.disk_usage('/').percent)
+        await asyncio.sleep(1)  # هر ۱ ثانیه یکبار داده‌ها ثبت شوند
+
 
 # async def collect_data():
 #     print("📊 Collecting daily resource data...")  # 👈 این خط را اضافه کنید
@@ -1334,7 +1344,7 @@ def main():
 
     # Background tasks
     loop = asyncio.get_event_loop()
-    #loop.create_task(collect_data())  # اجرای جمع‌آوری داده‌ها
+    loop.create_task(collect_data())  # اجرای جمع‌آوری داده‌ها
     loop.create_task(check_alerts(application))  # اجرای بررسی هشدارها
     loop.create_task(collect_daily_data())  # اجرای جمع‌آوری داده‌های ۲۴ ساعت اخیر #daily report
     
