@@ -332,7 +332,7 @@ async def monitor_ssh_log(app: Application):
                 ip = match.group(1)
                 failed_attempts[ip] += 1
                 if failed_attempts[ip] >= FAILED_ATTEMPTS_THRESHOLD:
-                    if ip == "80.244.11.136":  # جلوگیری از بلاک شدن سرور                    
+                    if ip == "77.83.203.147":  # جلوگیری از بلاک شدن سرور                    
                         print(f"⚠️ IP سرور ({ip}) شناسایی شد، اما بلاک نخواهد شد.")
                     elif ip not in blocked_ips:
                         print(f"✅ Blocking {ip} ...")
@@ -351,7 +351,7 @@ async def send_security_alert(app: Application, ip: str, attack_type: str):
 ### 🛡 **بلاک کردن IP مشکوک**
 def block_ip(ip: str):
     """بستن خودکار IP مشکوک"""
-    if ip == "80.244.11.136":  # جلوگیری از بلاک شدن سرور
+    if ip == "77.83.203.147":  # جلوگیری از بلاک شدن سرور
         print(f"⚠️ Server IP ({ip}) detected, but it will not be blocked.")
         return
     subprocess.run(["sudo", "iptables", "-A", "INPUT", "-s", ip, "-j", "DROP"])
@@ -396,7 +396,7 @@ async def check_ddos_attack(app: Application):
 
         for ip, count in ip_counts.items():
             if count > DDoS_CONNECTION_THRESHOLD:
-                if ip == "80.244.11.136":  # جلوگیری از بلاک شدن سرور
+                if ip == "77.83.203.147":  # جلوگیری از بلاک شدن سرور
                     print(f"⚠️ Server IP ({ip}) detected, but it will not be blocked.")
                 elif ip not in blocked_ips:
                     await send_security_alert(app, ip, "DDoS Attack")
@@ -1240,7 +1240,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         # بررسی عدم بلاک کردن IP خود سرور
-        if ip == "80.244.11.136":
+        if ip == "77.83.203.147":
             await update.message.reply_text("🚫 **You cannot unblock the server's IP!**", parse_mode="Markdown")
             context.user_data['awaiting_unblock_ip'] = False  # غیرفعال کردن درخواست
             return
