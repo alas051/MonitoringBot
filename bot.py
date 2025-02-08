@@ -1271,17 +1271,6 @@ async def collect_data():
             disk_data.append(psutil.disk_usage('/').percent)
         await asyncio.sleep(1)  # هر ۱ ثانیه یکبار داده‌ها ثبت شوند
 
-
-# async def collect_data():
-#     print("📊 Collecting daily resource data...")  # 👈 این خط را اضافه کنید
-#     while True:
-#         async with lock:
-#             cpu_data.append(psutil.cpu_percent(interval=1))
-#             memory_data.append(psutil.virtual_memory().percent)
-#             disk_data.append(psutil.disk_usage('/').percent)
-#         await asyncio.sleep(1)
-
-
 async def check_alerts(app: Application):
     while True:
         await asyncio.sleep(300)  # Check every 5 minutes
