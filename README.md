@@ -42,3 +42,9 @@ Use the `/cmd` prefix to execute a command.
 ```bash
 /cmd uptime
 /cmd df -h
+```
+
+## 🛠 Installation & Setup
+
+To set up the bot on your Linux server, download and execute the setup.sh script with `bash setup.sh`
+
