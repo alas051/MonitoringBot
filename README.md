@@ -49,9 +49,7 @@ Use the `/cmd` prefix to execute a command.
 To set up the bot on your Linux server, follow these steps:
 
 ``` bash
-git clone https://github.com/alas051/MonitoringBot.git
-cd MonitoringBot
-bash setup.sh
+git clone https://github.com/alas051/MonitoringBot.git && cd MonitoringBot && bash setup.sh
 ```
 
 ## 📜 License
