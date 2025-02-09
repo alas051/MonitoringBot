@@ -414,6 +414,29 @@ def is_valid_ip(ip: str) -> bool:
 from collections import deque
 import datetime
 
+
+async def reset_daily_data():
+    """ ریست داده‌های روزانه در ابتدای هر روز """
+    while True:
+        now = datetime.datetime.now()
+        # محاسبه زمان باقی‌مانده تا نیمه‌شب
+        next_reset_time = (now + datetime.timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        sleep_seconds = (next_reset_time - now).total_seconds()
+        
+        print(f"⏳ Resetting daily data in {sleep_seconds / 3600:.2f} hours...")
+
+        # صبر تا رسیدن به نیمه‌شب
+        await asyncio.sleep(sleep_seconds)
+
+        # ریست کردن داده‌های ذخیره‌شده
+        resource_history["cpu"].clear()
+        resource_history["memory"].clear()
+        resource_history["disk"].clear()
+        resource_history["timestamps"].clear()
+
+        print("✅ Daily resource data has been reset!")
+
+
 # ذخیره اطلاعات منابع سرور در ۲۴ ساعت گذشته (هر ۵ دقیقه یک بار)
 resource_history = {
     "cpu": deque(maxlen=288),  # 288 رکورد برای 24 ساعت (هر 5 دقیقه یک رکورد)
@@ -1336,6 +1359,7 @@ def main():
     loop.create_task(collect_data())  # اجرای جمع‌آوری داده‌ها
     loop.create_task(check_alerts(application))  # اجرای بررسی هشدارها
     loop.create_task(collect_daily_data())  # اجرای جمع‌آوری داده‌های ۲۴ ساعت اخیر #daily report
+    loop.create_task(reset_daily_data())  # اجرای ریست روزانه داده‌ها
     
     application.run_polling()
 
