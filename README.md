@@ -48,3 +48,6 @@ Use the `/cmd` prefix to execute a command.
 
 To set up the bot on your Linux server, download and execute the setup.sh script with `bash setup.sh`
 
+## 📜 License
+
+This project is licensed under the MIT License. See the LICENSE file for details.
