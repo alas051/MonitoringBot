@@ -32,17 +32,7 @@ This bot helps you **monitor, manage, and secure** your Linux server effortlessl
 ### ⌨️ Run Linux Commands
 - Execute **pre-approved system commands** remotely.
 
----
 
-## 🚀 How to Use
-
-### 💻 Run a Command
-Use the `/cmd` prefix to execute a command.  
-**Example:**  
-```bash
-/cmd uptime
-/cmd df -h
-```
 
 ## 🛠 Installation & Setup
 
