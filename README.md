@@ -32,7 +32,7 @@ This bot helps you **monitor, manage, and secure** your Linux server effortlessl
 ### ⌨️ Run Linux Commands
 - Execute **pre-approved system commands** remotely.
 
-
+---
 
 ## 🛠 Installation & Setup
 
