@@ -532,7 +532,7 @@ def generate_daily_report_csv():
 async def send_daily_report(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """ ارسال گزارش روزانه در قالب فایل CSV به ادمین """
 
-    if update.effective_user.id != ADMIN_USER_ID:
+    if not is_authorized_user(update):  #updated
         await update.callback_query.answer("⛔ You are not authorized to request this report.", show_alert=True)
         return
 
@@ -563,7 +563,7 @@ async def send_daily_report(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         # ارسال فایل
         with open(csv_path, "rb") as file:
-            await context.bot.send_document(chat_id=ADMIN_USER_ID, document=file, filename=os.path.basename(csv_path))
+            await context.bot.send_document(chat_id=update.effective_user.id, document=file, filename=os.path.basename(csv_path)) #updated
 
         await update.callback_query.message.reply_text("✅ **Daily report sent successfully!**", parse_mode="Markdown")
 
@@ -615,7 +615,7 @@ async def send_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
     file_path = os.path.join(DEFAULT_FILE_PATH, filename)
 
     if os.path.exists(file_path):
-        await context.bot.send_document(chat_id=ADMIN_USER_ID, document=open(file_path, "rb"), filename=filename)
+        await context.bot.send_document(chat_id=update.effective_user.id, document=open(file_path, "rb"), filename=filename)
         await query.answer("📄 File sent successfully!", show_alert=True)
     else:
         await query.answer("⚠️ File not found!", show_alert=True)
@@ -623,7 +623,7 @@ async def send_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """ذخیره فایل ارسال شده توسط ادمین در `/var/www/html/`"""
-    if update.effective_user.id != ADMIN_USER_ID:
+    if not is_authorized_user(update):
         await update.message.reply_text("⛔ You are not authorized to upload files.")
         return
 
@@ -1153,39 +1153,112 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
 
 
+    # elif query.data == "view_ddos":
+    #     text = "**🔥 Detected DDoS Attacks:**\n"
+    #     result = subprocess.run(["netstat", "-tn"], stdout=subprocess.PIPE, text=True)
+    #     ip_counts = defaultdict(int)
+    #     for line in result.stdout.split("\n"):
+    #         match = re.search(r"(\d+\.\d+\.\d+\.\d+):\d+", line)
+    #         if match:
+    #             ip = match.group(1)
+    #             ip_counts[ip] += 1
+
+    #     if ip_counts:
+    #         for ip, count in ip_counts.items():
+    #             if count > 50:
+    #                 text += f"🚨 IP `{ip}` - Connections: `{count}`\n"
+    #     else:
+    #         text += "✅ No DDoS attack detected."
+    #     keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="security_main")]]
+    #     reply_markup = InlineKeyboardMarkup(keyboard)
+    #     await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+
     elif query.data == "view_ddos":
         text = "**🔥 Detected DDoS Attacks:**\n"
-        result = subprocess.run(["netstat", "-tn"], stdout=subprocess.PIPE, text=True)
-        ip_counts = defaultdict(int)
-        for line in result.stdout.split("\n"):
-            match = re.search(r"(\d+\.\d+\.\d+\.\d+):\d+", line)
-            if match:
-                ip = match.group(1)
-                ip_counts[ip] += 1
+        try:
+            result = subprocess.run(["ss", "-tun"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            if result.returncode != 0:
+                text += f"⚠️ Error running ss: {result.stderr.strip()}"
+            else:
+                ip_counts = defaultdict(int)
+                for line in result.stdout.split("\n"):
+                    # Parse lines like: "tcp ESTAB 0 0 192.168.1.1:80 203.0.113.5:12345"
+                    parts = line.split()
+                    if len(parts) >= 5 and ":" in parts[4]:  # Check for foreign address column
+                        ip_port = parts[4]  # e.g., "203.0.113.5:12345"
+                        ip = ip_port.rsplit(":", 1)[0]  # Extract IP part
+                        try:
+                            ipaddress.ip_address(ip)  # Validate it's a valid IP
+                            ip_counts[ip] += 1
+                        except ValueError:
+                            continue  # Skip non-IP entries
 
-        if ip_counts:
-            for ip, count in ip_counts.items():
-                if count > 50:
-                    text += f"🚨 IP `{ip}` - Connections: `{count}`\n"
-        else:
-            text += "✅ No DDoS attack detected."
+                if ip_counts:
+                    for ip, count in ip_counts.items():
+                        if count > 50:  # Adjust threshold as needed
+                            text += f"🚨 IP `{ip}` - Connections: `{count}`\n"
+                else:
+                    text += "✅ No DDoS attack detected."
+        except FileNotFoundError:
+            text += "⚠️ The `ss` command is not installed. Please install `iproute2`."
+        except Exception as e:
+            text += f"⚠️ Error: {str(e)}"
+
         keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="security_main")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
 
+    # elif query.data == "view_blocked_ips":
+    #     blocked_ips = get_blocked_ips()
+    #     if blocked_ips:
+    #         text = "**🚫 Blocked IPs:**\n"
+    #         text += "\n".join([f"🔴 `{ip}`" for ip in blocked_ips])
+    #     else:
+    #         text = "✅ No blocked IPs found."
 
+    #     keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="security_main")]]
+    #     reply_markup = InlineKeyboardMarkup(keyboard)
+    #     await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+    
     elif query.data == "view_blocked_ips":
         blocked_ips = get_blocked_ips()
         if blocked_ips:
             text = "**🚫 Blocked IPs:**\n"
-            text += "\n".join([f"🔴 `{ip}`" for ip in blocked_ips])
+            ip_list = "\n".join([f"🔴 `{ip}`" for ip in blocked_ips])
+            full_text = text + ip_list
+            
+            # Telegram message limit is 4096 characters
+            MAX_MESSAGE_LENGTH = 4096
+            
+            if len(full_text) <= MAX_MESSAGE_LENGTH:
+                # If the message fits, send it as is
+                keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="security_main")]]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                await query.edit_message_text(full_text, reply_markup=reply_markup, parse_mode="Markdown")
+            else:
+                # Split the message into chunks
+                messages = []
+                current_message = text
+                for line in ip_list.split("\n"):
+                    if len(current_message) + len(line) + 1 < MAX_MESSAGE_LENGTH:
+                        current_message += line + "\n"
+                    else:
+                        messages.append(current_message.strip())
+                        current_message = text + line + "\n"
+                if current_message.strip():
+                    messages.append(current_message.strip())
+                
+                # Send each chunk as a separate message
+                keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="security_main")]]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                await query.edit_message_text(messages[0], reply_markup=reply_markup, parse_mode="Markdown")
+                for msg in messages[1:]:
+                    await query.message.reply_text(msg, parse_mode="Markdown")
         else:
             text = "✅ No blocked IPs found."
-
-        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="security_main")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
-    
+            keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="security_main")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
 
 
     elif query.data == "unblock_ip_menu":
