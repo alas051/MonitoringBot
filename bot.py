@@ -343,14 +343,12 @@ def block_ip(ip: str):
 
 ### unblock ip
 def unblock_ip(ip: str):
-    """باز کردن IP بلاک شده"""
     subprocess.run(["sudo", "iptables", "-D", "INPUT", "-s", ip, "-j", "DROP"])
     print(f"✅ IP {ip} has been unblocked.")
 
 ### get list of blocked ips
 
 def get_blocked_ips():
-    """دریافت لیست IPهایی که واقعاً بلاک شده‌اند"""
     result = subprocess.run(["sudo", "iptables", "-L", "INPUT", "-v", "-n"], stdout=subprocess.PIPE, text=True)
     lines = result.stdout.split("\n")
     blocked_ips = []
