@@ -250,7 +250,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     "🛠 *Manage Services*: Start, stop, restart, or check the status of services like **Nginx, MySQL, and more.**\n"
     "🌐 *Network Tools*: Run **speed tests**, check **packet loss**, and monitor **network stability.**\n"
     "⚠️ *Custom Alerts*: Set up notifications for **high CPU usage, low disk space**, and other critical thresholds.\n"
-    "🔐 *Security Monitoring*: Detect and block **suspicious login attempts**, monitor **DDoS attacks**, and manage **blocked IPs.**\n"
+    "🔐 *Security Monitoring*: Detect and block **suspicious login attempts**, and manage **blocked IPs.**\n"
     "📄 *Daily Server Reports*: Receive detailed **CSV reports** of server performance over the last 24 hours.\n"
     "📂 *File Management*: **Upload, download, and delete** files from your server easily.\n"
     "⌨️ *Run Linux Commands*: Execute **pre-approved system commands** remotely.\n\n"
@@ -295,7 +295,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ################# security functions ###################3
 
 FAILED_ATTEMPTS_THRESHOLD = 5  
-DDoS_CONNECTION_THRESHOLD = 50  
 AUTH_LOG_PATH = "/var/log/auth.log"  
 
 failed_attempts = defaultdict(int)  # failed attempt for login (ssh)
@@ -359,35 +358,6 @@ def get_blocked_ips():
             blocked_ips.append(match.group(1))
 
     return blocked_ips
-
-
-
-### check ddos attack
-async def check_ddos_attack(app: Application):
-    while True:
-        await asyncio.sleep(60)  
-        result = subprocess.run(["netstat", "-tn"], stdout=subprocess.PIPE, text=True)
-        ip_counts = defaultdict(int)
-
-        for line in result.stdout.split("\n"):
-            match = re.search(r"(\d+\.\d+\.\d+\.\d+):\d+", line)
-            if match:
-                ip = match.group(1)
-                ip_counts[ip] += 1
-
-        for ip, count in ip_counts.items():
-            if count > DDoS_CONNECTION_THRESHOLD:
-                if ip == "77.83.203.147":  
-                    print(f"⚠️ Server IP ({ip}) detected, but it will not be blocked.")
-                elif ip not in blocked_ips:
-                    await send_security_alert(app, ip, "DDoS Attack")
-                    block_ip(ip)
-                    blocked_ips.add(ip)
-
-def is_valid_ip(ip: str) -> bool:
-    pattern = r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"
-    return re.match(pattern, ip) is not None
-
 
 
 ######################################  Daily Report    ######################################
@@ -1042,8 +1012,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.data == "security_main":
         keyboard = [
             [
-                InlineKeyboardButton("🛡 Unblock All IPs", callback_data="unblock_all_ips"),
-                InlineKeyboardButton("🔥 View DDoS Attacks", callback_data="view_ddos")
+                InlineKeyboardButton("🛡 Unblock All IPs", callback_data="unblock_all_ips")
             ],
             [
                 InlineKeyboardButton("🚫 View Blocked IPs", callback_data="view_blocked_ips"),
@@ -1071,41 +1040,6 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
 
 
-    elif query.data == "view_ddos":
-        text = "**🔥 Detected DDoS Attacks:**\n"
-        try:
-            result = subprocess.run(["ss", "-tun"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            if result.returncode != 0:
-                text += f"⚠️ Error running ss: {result.stderr.strip()}"
-            else:
-                ip_counts = defaultdict(int)
-                for line in result.stdout.split("\n"):
-                    parts = line.split()
-                    if len(parts) >= 5 and ":" in parts[4]:  
-                        ip_port = parts[4]  
-                        ip = ip_port.rsplit(":", 1)[0]  
-                        try:
-                            ipaddress.ip_address(ip)  
-                            ip_counts[ip] += 1
-                        except ValueError:
-                            continue  
-
-                if ip_counts:
-                    for ip, count in ip_counts.items():
-                        if count > 50:  
-                            text += f"🚨 IP `{ip}` - Connections: `{count}`\n"
-                else:
-                    text += "✅ No DDoS attack detected."
-        except FileNotFoundError:
-            text += "⚠️ The `ss` command is not installed. Please install `iproute2`."
-        except Exception as e:
-            text += f"⚠️ Error: {str(e)}"
-
-        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="security_main")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
-
-    
     elif query.data == "view_blocked_ips":
         blocked_ips = get_blocked_ips()
         if blocked_ips:
@@ -1155,9 +1089,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [
             [
                 InlineKeyboardButton("⚠️ Change Brute Force Threshold", callback_data="change_brute_force_threshold")],
-                [
-                InlineKeyboardButton("⚠️ Change DDoS Threshold", callback_data="change_ddos_threshold")
-            ],
+
             [InlineKeyboardButton("🔙 Back", callback_data="security_main")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -1167,9 +1099,6 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("Send the new SSH Brute Force detection threshold (e.g., 5 attempts):")
         context.user_data['awaiting_brute_force_threshold'] = True
 
-    elif query.data == "change_ddos_threshold":
-        await query.edit_message_text("Send the new DDoS detection threshold (e.g., 50 connections):")
-        context.user_data['awaiting_ddos_threshold'] = True
 
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1236,11 +1165,6 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         FAILED_ATTEMPTS_THRESHOLD = int(update.message.text.strip())
         await update.message.reply_text(f"✅ Brute Force threshold set to `{FAILED_ATTEMPTS_THRESHOLD}` attempts.", parse_mode="Markdown")
         context.user_data['awaiting_brute_force_threshold'] = False
-
-    elif context.user_data.get('awaiting_ddos_threshold'):
-        DDoS_CONNECTION_THRESHOLD = int(update.message.text.strip())
-        await update.message.reply_text(f"✅ DDoS threshold set to `{DDoS_CONNECTION_THRESHOLD}` connections.", parse_mode="Markdown")
-        context.user_data['awaiting_ddos_threshold'] = False
 
 
 # collect data after 1 second for chart
