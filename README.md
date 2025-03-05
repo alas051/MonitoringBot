@@ -1,3 +1,6 @@
+file:///home/alireza-asaee/Downloads/telegram%20bot%20for%20monitor%20linux%20server(blue%20penguin).jpg![image](https://github.com/user-attachments/assets/ac376c44-14f2-4db5-bd4d-70015c94287a)
+
+
 # 🚀 Server Monitoring Bot
 
 👋 **Welcome to the Server Monitoring Bot!**  
