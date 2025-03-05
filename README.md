@@ -21,7 +21,7 @@ This bot helps you **monitor, manage, and secure** your Linux server effortlessl
 - Set up notifications for **high CPU usage, low disk space**, and other critical thresholds.
 
 ### 🔐 Security Monitoring
-- Detect and block **suspicious login attempts**, monitor **DDoS attacks**, and manage **blocked IPs**.
+- Detect and block **suspicious login attempts** and manage **blocked IPs**.
 
 ### 📄 Daily Server Reports
 - Receive detailed **CSV reports** of server performance over the last 24 hours.
