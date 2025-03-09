@@ -385,7 +385,7 @@ async def reset_daily_data():
 
 # save resouce usage of server 24 hr past
 resource_history = {
-    "cpu": deque(maxlen=288),  
+    "cpu": deque(maxlen=288),  #(60/5) * 24
     "memory": deque(maxlen=288),
     "disk": deque(maxlen=288),
     "timestamps": deque(maxlen=288)  
@@ -1024,7 +1024,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("🔙 Back", callback_data="back_to_main")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text("🔐 **Security Menu**\nChoose an option:", reply_markup=reply_markup)
+        await query.edit_message_text("🔐 **Security Menu**\nChoose an option:", reply_markup=reply_markup , parse_mode="Markdown")
 
     elif query.data == "unblock_all_ips":
         blocked_ips = get_blocked_ips()
@@ -1093,7 +1093,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("🔙 Back", callback_data="security_main")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text("⚙️ **Security Settings**\nAdjust thresholds:", reply_markup=reply_markup)
+        await query.edit_message_text("⚙️ **Security Settings**\nAdjust thresholds:", reply_markup=reply_markup, parse_mode="Markdown")
 
     elif query.data == "change_brute_force_threshold":
         await query.edit_message_text("Send the new SSH Brute Force detection threshold (e.g., 5 attempts):")
@@ -1202,16 +1202,28 @@ async def check_alerts(app: Application):
 
 
 async def send_alert(app: Application, resource: str, usage: float, threshold: int):
-    msg = f"⚠️ *Alert!*\n {resource.capitalize()} usage is {usage:.2f}%, above the threshold of {threshold}%."
+    msg = f"""
+⚠️ *Alert! Critical Usage Detected!*
+
+The *{resource.capitalize()}* usage has exceeded the threshold:
+
+🔹 Current Usage: `{usage:.2f}%`
+🔹 Threshold: `{threshold}%`
+
+Please take immediate action to prevent potential issues.
+
+— *System Monitoring Alert* 🛑
+"""
     # Send to admin
-    await app.bot.send_message(chat_id=ADMIN_USER_ID, text=msg)
+    await app.bot.send_message(chat_id=ADMIN_USER_ID, text=msg, parse_mode="Markdown")
+
     # Send to all allowed users who have chat IDs
     for user in allowed_users:
         if isinstance(user, int):
             try:
-                await app.bot.send_message(chat_id=user, text=msg)
+                await app.bot.send_message(chat_id=user, text=msg, parse_mode="Markdown")
             except:
-                pass  
+                pass
 
 def main():
     application = Application.builder().token(TOKEN).build()
