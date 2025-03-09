@@ -2,7 +2,7 @@
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 #BOT_URL="http://77.83.203.147/monitoringBot.py"
-BOT_FILE="$SCRIPT_DIR/monitoringBot.py"
+BOT_FILE="$SCRIPT_DIR/bot.py"
 
 echo "📦 Installing required Python packages..."
 pip install --upgrade python-telegram-bot psutil matplotlib speedtest-cli pandas
