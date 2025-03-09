@@ -1,21 +1,10 @@
 #!/bin/bash
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
-#BOT_URL="http://77.83.203.147/monitoringBot.py"
 BOT_FILE="$SCRIPT_DIR/bot.py"
 
 echo "📦 Installing required Python packages..."
 pip install --upgrade python-telegram-bot psutil matplotlib speedtest-cli pandas
-
-#echo "📥 Downloading the monitoring bot script..."
-#curl -o "$BOT_FILE" "$BOT_URL"
-
-#if [ $? -ne 0 ]; then
-#     echo "❌ Failed to download the monitoring bot script. Exiting."
-#     exit 1
-# fi
-
-#echo "✅ Download successful."
 
 read -p "Enter your Telegram BOT TOKEN: " TOKEN
 read -p "Enter your Telegram ADMIN USER ID: " ADMIN_USER_ID
