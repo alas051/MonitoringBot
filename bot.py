@@ -21,7 +21,7 @@ import threading
 import shlex
 import pandas as pd
 
-TOKEN = "1897499322:AAEtaPmSmDR4f7OqrccAWwRv41KMClg9LHs"
+TOKEN = "your_telegramBot_token"
 
 ADMIN_USER_ID = 379836911  
 
