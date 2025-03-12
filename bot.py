@@ -21,7 +21,7 @@ import threading
 import shlex
 import pandas as pd
 
-TOKEN = "YOUR_TELEGRAMBOT_TOKEN"
+TOKEN = "1897499322:AAEtaPmSmDR4f7OqrccAWwRv41KMClg9LHs"
 
 ADMIN_USER_ID = 379836911  
 
@@ -36,26 +36,34 @@ allowed_users = set()
 # disk_data = deque(maxlen=60)
 cpu_data = {
     "1m": deque(maxlen=60),      # 1 minute (60 seconds)
-    "5m": deque(maxlen=300),     # 5 minutes (300 seconds)
-    "1h": deque(maxlen=3600),    # 1 hour (3600 seconds)
-    "12h": deque(maxlen=43200),  # 12 hours (43200 seconds)
-    "1d": deque(maxlen=86400)    # 1 day (86400 seconds)
+    "5m": deque(maxlen=60),     # 5 minutes (300 seconds)
+    "1h": deque(maxlen=60),    # 1 hour (3600 seconds)
+    "12h": deque(maxlen=60),  # 12 hours (43200 seconds)
+    "1d": deque(maxlen=60)    # 1 day (86400 seconds)
 }
 memory_data = {
     "1m": deque(maxlen=60),
-    "5m": deque(maxlen=300),
-    "1h": deque(maxlen=3600),
-    "12h": deque(maxlen=43200),
-    "1d": deque(maxlen=86400)
+    "5m": deque(maxlen=60),
+    "1h": deque(maxlen=60),
+    "12h": deque(maxlen=60),
+    "1d": deque(maxlen=60)
 }
 disk_data = {
     "1m": deque(maxlen=60),
-    "5m": deque(maxlen=300),
-    "1h": deque(maxlen=3600),
-    "12h": deque(maxlen=43200),
-    "1d": deque(maxlen=86400)
+    "5m": deque(maxlen=60),
+    "1h": deque(maxlen=60),
+    "12h": deque(maxlen=60),
+    "1d": deque(maxlen=60)
 }
 
+# Define sampling intervals in seconds
+SAMPLING_INTERVALS = {
+    "1m": 1,      # 1 second
+    "5m": 5,      # 5 seconds
+    "1h": 60,     # 1 minute
+    "12h": 720,   # 12 minutes
+    "1d": 1440    # 24 minutes
+}
 # Update the chart intervals definition
 CHART_INTERVALS = {
     "1m": "1 Minute",
@@ -259,10 +267,19 @@ def get_packet_loss():
 ################## make chart for monitoring ######################
 
 def generate_chart(data, label, interval):
-    plt.figure(figsize=(6, 4))
-    plt.plot(data, marker='o', label=label)
+    plt.figure(figsize=(8, 4))  # Slightly larger for better readability
+    time_points = range(-len(data) * SAMPLING_INTERVALS[interval], 0, SAMPLING_INTERVALS[interval])
+    plt.plot(time_points, data, marker='o', label=label)
     plt.title(f'{label} Usage Over Last {CHART_INTERVALS[interval]}')
-    plt.xlabel(f'Time (Seconds Ago)')
+    
+    # Adjust x-axis label based on interval
+    if interval in ["1m", "5m"]:
+        plt.xlabel('Time (Seconds Ago)')
+    elif interval == "1h":
+        plt.xlabel('Time (Minutes Ago)')
+    else:  # 12h and 1d
+        plt.xlabel('Time (Hours Ago)')
+    
     plt.ylabel('Usage (%)')
     plt.ylim(0, 100)
     plt.grid(True)
@@ -739,45 +756,45 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Select time interval for {resource.capitalize()} usage chart:",
             reply_markup=reply_markup
         )
+
     elif query.data.startswith("chart_"):
-            parts = query.data.split("_")
-            resource = parts[1]
-            interval = parts[2]
-            
-            if resource == "cpu":
-                data = cpu_data[interval]
-                details = get_cpu_details()
-                text = (
-                    f"**CPU Usage Over Last {CHART_INTERVALS[interval]}:**\n"
-                    f"- Total Cores: {details['count']} cores\n"
-                    f"- Current Usage: {data[-1] if data else 0:.2f}%\n"
-                )
-            elif resource == "memory":
-                data = memory_data[interval]
-                details = get_memory_details()
-                text = (
-                    f"**Memory Usage Over Last {CHART_INTERVALS[interval]}:**\n"
-                    f"- Total: {details['total']} MB\n"
-                    f"- Used: {details['used']} MB ({data[-1] if data else 0:.2f}%)\n"
-                )
-            elif resource == "disk":
-                data = disk_data[interval]
-                details = get_disk_details()
-                text = (
-                    f"**Disk Usage Over Last {CHART_INTERVALS[interval]}:**\n"
-                    f"- Total: {details['total']} MB\n"
-                    f"- Used: {details['used']} MB ({data[-1] if data else 0:.2f}%)\n"
-                )
+        parts = query.data.split("_")
+        resource = parts[1]
+        interval = parts[2]
+        
+        if resource == "cpu":
+            data = cpu_data[interval]
+            details = get_cpu_details()
+            text = (
+                f"**CPU Usage Over Last {CHART_INTERVALS[interval]}:**\n"
+                f"- Total Cores: {details['count']} cores\n"
+                f"- Current Usage: {data[-1] if data else 0:.2f}%\n"
+            )
+        elif resource == "memory":
+            data = memory_data[interval]
+            details = get_memory_details()
+            text = (
+                f"**Memory Usage Over Last {CHART_INTERVALS[interval]}:**\n"
+                f"- Total: {details['total']} MB\n"
+                f"- Used: {details['used']} MB ({data[-1] if data else 0:.2f}%)\n"
+            )
+        elif resource == "disk":
+            data = disk_data[interval]
+            details = get_disk_details()
+            text = (
+                f"**Disk Usage Over Last {CHART_INTERVALS[interval]}:**\n"
+                f"- Total: {details['total']} MB\n"
+                f"- Used: {details['used']} MB ({data[-1] if data else 0:.2f}%)\n"
+            )
 
-            # Generate and send the chart
-            chart_buf = generate_chart(list(data), resource.capitalize(), interval)
-            await query.message.reply_photo(photo=chart_buf)
+        # Generate and send the chart
+        chart_buf = generate_chart(list(data), resource.capitalize(), interval)
+        await query.message.reply_photo(photo=chart_buf)
 
-            # Send the text with back button
-            keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="monitoring_main")]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            await query.message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
-
+        # Send the text with back button
+        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="monitoring_main")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
 
     elif query.data == "services_main":
         service_buttons = []
@@ -1352,16 +1369,31 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # collect data after 1 second for chart
 async def collect_data():
     print("📊 Collecting real-time resource data...")
+    last_collection = {
+        "1m": 0,
+        "5m": 0,
+        "1h": 0,
+        "12h": 0,
+        "1d": 0
+    }
+    
     while True:
+        current_time = time.time()
+        
         async with lock:
             cpu_usage = psutil.cpu_percent(interval=1)
             mem_usage = psutil.virtual_memory().percent
             disk_usage = psutil.disk_usage('/').percent
             
+            # Collect data for each interval based on its sampling rate
             for interval in CHART_INTERVALS.keys():
-                cpu_data[interval].append(cpu_usage)
-                memory_data[interval].append(mem_usage)
-                disk_data[interval].append(disk_usage)
+                if current_time - last_collection[interval] >= SAMPLING_INTERVALS[interval]:
+                    cpu_data[interval].append(cpu_usage)
+                    memory_data[interval].append(mem_usage)
+                    disk_data[interval].append(disk_usage)
+                    last_collection[interval] = current_time
+        
+        # Sleep for the shortest interval (1 second)
         await asyncio.sleep(1)
 
 async def check_alerts(app: Application):
