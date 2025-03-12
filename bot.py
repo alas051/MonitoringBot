@@ -21,7 +21,7 @@ import threading
 import shlex
 import pandas as pd
 
-TOKEN = "YOUR_TOKEN"
+TOKEN = "YOUT_TELEGRAMBOT_TOKEN"
 
 ADMIN_USER_ID = 379836911  
 
@@ -265,25 +265,36 @@ def get_packet_loss():
 
 
 ################## make chart for monitoring ######################
-
 def generate_chart(data, label, interval):
     plt.figure(figsize=(8, 4))  # Slightly larger for better readability
-    time_points = range(-len(data) * SAMPLING_INTERVALS[interval], 0, SAMPLING_INTERVALS[interval])
-    plt.plot(time_points, data, marker='o', label=label)
+    
+    # Calculate the total duration based on the interval and sampling rate
+    total_points = len(data)
+    total_duration = total_points * SAMPLING_INTERVALS[interval]
+    
+    # Generate time points starting from 0 (present) to total_duration (past)
+    time_points = list(range(0, total_duration + SAMPLING_INTERVALS[interval], SAMPLING_INTERVALS[interval]))
+    
+    # Plot the data with reversed time points to match the data order (newest at the right)
+    plt.plot(time_points[:len(data)], data, marker='o', label=label)
     plt.title(f'{label} Usage Over Last {CHART_INTERVALS[interval]}')
     
     # Adjust x-axis label based on interval
     if interval in ["1m", "5m"]:
-        plt.xlabel('Time (Seconds Ago)')
+        plt.xlabel('Time Elapsed (Seconds)')
     elif interval == "1h":
-        plt.xlabel('Time (Minutes Ago)')
+        plt.xlabel('Time Elapsed (Minutes)')
     else:  # 12h and 1d
-        plt.xlabel('Time (Hours Ago)')
+        plt.xlabel('Time Elapsed (Hours)')
     
     plt.ylabel('Usage (%)')
     plt.ylim(0, 100)
     plt.grid(True)
     plt.legend()
+    
+    # Invert x-axis if desired (optional: to show past on the left, present on the right)
+    # plt.gca().invert_xaxis()
+    
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
     buf.seek(0)
