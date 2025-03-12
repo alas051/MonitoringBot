@@ -21,7 +21,7 @@ import threading
 import shlex
 import pandas as pd
 
-TOKEN = "your_telegramBot_token"
+TOKEN = "Your_TelegramBot_Token"
 
 ADMIN_USER_ID = 379836911  
 
@@ -38,6 +38,30 @@ disk_data = deque(maxlen=60)
 lock = asyncio.Lock()  # Lock to ensure only one task runs at a time
 
 services = ["nginx", "mysql"] 
+
+# Threshold intervals in seconds
+alert_intervals = {
+    "cpu": 300,    # Default 5 minutes
+    "memory": 300,
+    "disk": 300
+}
+
+# Last alert times to track intervals
+last_alert_times = {
+    "cpu": 0,
+    "memory": 0,
+    "disk": 0
+}
+
+# Available interval options
+INTERVAL_OPTIONS = {
+    "1m": 60,
+    "5m": 300,
+    "30m": 1800,
+    "1h": 3600,
+    "12h": 43200,
+    "1d": 86400
+}
 
 # threshold for alerting
 thresholds = {
@@ -865,8 +889,15 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             keyboard = [[InlineKeyboardButton("🔙  Back", callback_data="back_to_main")]]
 
         reply_markup = InlineKeyboardMarkup(keyboard)
+        cpu_interval = [k for k, v in INTERVAL_OPTIONS.items() if v == alert_intervals['cpu']][0]
+        mem_interval = [k for k, v in INTERVAL_OPTIONS.items() if v == alert_intervals['memory']][0]
+        disk_interval = [k for k, v in INTERVAL_OPTIONS.items() if v == alert_intervals['disk']][0]
+        
         await query.edit_message_text(
-            f"Current Thresholds:\nCPU: {thresholds['cpu']}%\nMemory: {thresholds['memory']}%\nDisk: {thresholds['disk']}%\n\n",
+            f"Current Thresholds:\n"
+            f"CPU: {thresholds['cpu']}% (Interval: {cpu_interval})\n"
+            f"Memory: {thresholds['memory']}% (Interval: {mem_interval})\n"
+            f"Disk: {thresholds['disk']}% (Interval: {disk_interval})\n\n",
             reply_markup=reply_markup
         )
 
@@ -877,7 +908,40 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         resource = query.data.split("_")[1]
         context.user_data['awaiting_threshold_resource'] = resource
-        await query.edit_message_text(f"Please send the {resource.capitalize()} threshold in percent (e.g. 80):")
+        #await query.edit_message_text(f"Please send the {resource.capitalize()} threshold in percent (e.g. 80):")
+        # Create interval selection buttons
+        interval_buttons = [
+            [
+                InlineKeyboardButton("1m", callback_data=f"interval_{resource}_1m"),
+                InlineKeyboardButton("5m", callback_data=f"interval_{resource}_5m"),
+                InlineKeyboardButton("30m", callback_data=f"interval_{resource}_30m")
+            ],
+            [
+                InlineKeyboardButton("1h", callback_data=f"interval_{resource}_1h"),
+                InlineKeyboardButton("12h", callback_data=f"interval_{resource}_12h"),
+                InlineKeyboardButton("1d", callback_data=f"interval_{resource}_1d")
+            ],
+            [
+                InlineKeyboardButton("🔙 Back", callback_data=f"alerting_main")
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(interval_buttons)
+        await query.edit_message_text(
+            f"Select alert interval for {resource.capitalize()} threshold:",
+            reply_markup=reply_markup
+        )
+
+    elif query.data.startswith("interval_"):
+        parts = query.data.split("_")
+        resource = parts[1]
+        interval_key = parts[2]
+        
+        context.user_data['awaiting_threshold_resource'] = resource
+        context.user_data['selected_interval'] = INTERVAL_OPTIONS[interval_key]
+        await query.edit_message_text(
+            f"Interval set to {interval_key}. Now please send the {resource.capitalize()} threshold in percent (e.g. 80):"
+        )
+
 
     elif query.data in ["remove_cpu_threshold", "remove_memory_threshold", "remove_disk_threshold"]:
         if query.from_user.id != ADMIN_USER_ID:
@@ -887,8 +951,12 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         resource = query.data.split("_")[1]
         thresholds[resource] = None
         alert_states[resource] = False  # Reset alert state if removing threshold
-        await query.edit_message_text(f"{resource.capitalize()} threshold removed.")
-
+        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="alerting_main")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(
+            f"{resource.capitalize()} threshold removed.\n",
+            reply_markup=reply_markup
+        )
   
     elif query.data == "cpu":
         current_usage = cpu_data[-1] if cpu_data else 0
@@ -1123,19 +1191,42 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data['awaiting_user_to_add'] = False
         return
 
-    # Handle setting thresholds
     if context.user_data.get('awaiting_threshold_resource'):
         resource = context.user_data['awaiting_threshold_resource']
+        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="alerting_main")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
         try:
             val = int(update.message.text.strip())
             if val < 0 or val > 100:
-                await update.message.reply_text("Please provide a valid percentage between 0 and 100.")
+                await update.message.reply_text(
+                    "Please provide a valid percentage between 0 and 100.",
+                    reply_markup=reply_markup
+                )
             else:
                 thresholds[resource] = val
-                await update.message.reply_text(f"{resource.capitalize()} threshold set to {val}%!")
+                if 'selected_interval' in context.user_data:
+                    alert_intervals[resource] = context.user_data['selected_interval']
+                    interval_str = [k for k, v in INTERVAL_OPTIONS.items() if v == context.user_data['selected_interval']][0]
+                    await update.message.reply_text(
+                        f"{resource.capitalize()} threshold set to {val}% with {interval_str} alert interval!\n",
+                        reply_markup=reply_markup,
+                        parse_mode="Markdown"
+                    )
+                else:
+                    await update.message.reply_text(
+                        f"{resource.capitalize()} threshold set to {val}%!\n",
+                        reply_markup=reply_markup,
+                        parse_mode="Markdown"
+                    )
+                    
         except ValueError:
-            await update.message.reply_text("Please provide a numeric value for the threshold.")
+            await update.message.reply_text(
+                "Please provide a numeric value for the threshold.",
+                reply_markup=reply_markup
+            )
         context.user_data['awaiting_threshold_resource'] = None
+        context.user_data.pop('selected_interval', None)
+        return
 
 
     # check ip and unblock
@@ -1167,6 +1258,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data['awaiting_brute_force_threshold'] = False
 
 
+
 # collect data after 1 second for chart
 async def collect_data():
     print("📊 Collecting real-time resource data...")
@@ -1177,10 +1269,10 @@ async def collect_data():
             disk_data.append(psutil.disk_usage('/').percent)
         await asyncio.sleep(1)  
 
-# check alert after 5 mins
 async def check_alerts(app: Application):
     while True:
-        await asyncio.sleep(300)  
+        await asyncio.sleep(60)  # Check every minute
+        current_time = time.time()
         cpu_usage = psutil.cpu_percent(interval=1)
         mem_usage = psutil.virtual_memory().percent
         disk_usage = psutil.disk_usage('/').percent
@@ -1194,8 +1286,11 @@ async def check_alerts(app: Application):
         for resource, threshold in thresholds.items():
             if threshold is not None:
                 usage = usage_map[resource]
-                if usage > threshold:
+                time_since_last_alert = current_time - last_alert_times[resource]
+                
+                if usage > threshold and time_since_last_alert >= alert_intervals[resource]:
                     await send_alert(app, resource, usage, threshold)
+                    last_alert_times[resource] = current_time
                 elif usage <= threshold:
                     alert_states[resource] = False
 
