@@ -46,6 +46,7 @@ To set up the bot on your Linux server, follow these steps:
 ``` bash
 git clone https://github.com/alas051/MonitoringBot.git && cd MonitoringBot && bash setup.sh
 ```
+Then you should enter your Telegram bot token, the admin's chat ID, and your Linux server IP address.
 
 ## 📜 License
 
