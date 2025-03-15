@@ -21,9 +21,9 @@ import threading
 import shlex
 import pandas as pd
 
-TOKEN = "YOUT_TELEGRAMBOT_TOKEN"
+TOKEN = "YOUR_TelegramBot_TOKEN"
 
-ADMIN_USER_ID = 379836911  
+ADMIN_USER_ID = 1234567890  
 
 DEFAULT_FILE_PATH = "/var/www/html/" 
 
