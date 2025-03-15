@@ -8,6 +8,8 @@
 This bot helps you **monitor, manage, and secure** your Linux server effortlessly. With its powerful features, you can track system performance, manage services, monitor network health, automate alerts, handle files, and generate reports!
 
 ---
+![Uploading image.png…]()
+
 
 ## 🎯 Features
 
