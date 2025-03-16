@@ -15,9 +15,11 @@ This is a powerful Telegram bot designed to help you monitor, manage, and secure
 
 ### 📊 Monitor Server Resources
 - Track **CPU, memory, disk usage, and uptime** in real-time.
+- Visualize usage trends with dynamic charts over multiple time intervals (1m, 5m, 1h, 12h, 1d).
 
 ### 🛠 Manage Services
 - Start, stop, restart, or check the status of services like **Nginx, MySQL, and more**.
+- Add or remove services to monitor dynamically.
 
 ### 🌐 Network Tools
 - Run **speed tests**, check **packet loss**, and monitor **network stability**.
@@ -35,7 +37,7 @@ This is a powerful Telegram bot designed to help you monitor, manage, and secure
 - **Upload, download, and delete** files from your server easily.
 
 ### ⌨️ Run Linux Commands
-- Execute **pre-approved system commands** remotely.
+- Run **pre-approved Linux commands** (e.g., uptime, df, free) directly via Telegram.
 
 ---
 
