@@ -3,9 +3,9 @@
 
 # 🚀 Linux Server Monitoring Telegram Bot
 
-👋 **Welcome to the Server Monitoring Bot!**  
+👋 **Welcome to the Server Monitoring Bot!**
 
-This bot helps you **monitor, manage, and secure** your Linux server effortlessly. With its powerful features, you can track system performance, manage services, monitor network health, automate alerts, handle files, and generate reports!
+This is a powerful Telegram bot designed to help you monitor, manage, and secure your Linux server with ease. Whether you're tracking system performance, managing services, or ensuring security, this bot provides a seamless and interactive experience right from Telegram!
 
 ---
 ![image](https://github.com/user-attachments/assets/b5f7499f-e3da-47f0-a876-2ebb42cfd135)
@@ -39,8 +39,13 @@ This bot helps you **monitor, manage, and secure** your Linux server effortlessl
 
 ---
 
-## 🛠 Installation & Setup
+### 🛠 Installation & Setup
 
+**Prerequisites**
+
+- A Linux server with Python 3.7+ installed.
+- A Telegram bot token (get one from BotFather).
+    
 To set up the bot on your Linux server, follow these steps:
 
 ``` bash
@@ -50,4 +55,10 @@ Then you should enter your Telegram bot token, the admin's chat ID, and your Lin
 
 ## 📜 License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+This project is licensed under the MIT License. Feel free to use, modify, and distribute it as you see fit!
+
+## 📬 Contact
+
+Have questions or suggestions? Open an issue or reach out to alas051.
+
+**⭐ Star this repo if you find it useful! ⭐**
