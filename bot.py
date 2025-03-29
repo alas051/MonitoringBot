@@ -21,7 +21,7 @@ import threading
 import shlex
 import pandas as pd
 
-TOKEN = "YOUR_TelegramBot_TOKEN"
+TOKEN = "you_telegrambot_token"
 
 ADMIN_USER_ID = 1234567890  
 
@@ -149,6 +149,40 @@ def get_uptime():
     return f"{days}d {hours}h {minutes}m {seconds}s"
 
 ########################################################    
+
+
+### top process
+
+import psutil
+
+def get_top_processes(sort_by="cpu", limit=5):
+    """
+    Get top processes sorted by CPU or memory usage.
+    
+    Args:
+        sort_by (str): 'cpu' or 'memory' to determine sorting criteria.
+        limit (int): Number of processes to return.
+    Returns:
+        list: List of dictionaries containing process details.
+    """
+    processes = []
+    for proc in psutil.process_iter(['pid', 'name', 'cpu_percent', 'memory_percent']):
+        try:
+            processes.append({
+                'pid': proc.info['pid'],
+                'name': proc.info['name'],
+                'cpu': proc.info['cpu_percent'],
+                'memory': proc.info['memory_percent']
+            })
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    
+    if sort_by == "cpu":
+        return sorted(processes, key=lambda x: x['cpu'], reverse=True)[:limit]
+    elif sort_by == "memory":
+        return sorted(processes, key=lambda x: x['memory'], reverse=True)[:limit]
+    return processes[:limit]
+
 
 # status for manage services
 
@@ -593,6 +627,9 @@ async def file_management_menu(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 
+
+
+
 import os
 
 async def list_files(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -743,7 +780,14 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 InlineKeyboardButton("Disk", callback_data="disk"),
                 InlineKeyboardButton("Uptime", callback_data="uptime"),
             ],
-            [InlineKeyboardButton("🔙  Back", callback_data="back_to_main")],
+            [   InlineKeyboardButton("Process", callback_data="process"),               
+                 
+            ],
+            [
+                InlineKeyboardButton("🔙  Back", callback_data="back_to_main"),             
+                 
+            ]
+            ,
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text("Select a resource to monitor:", reply_markup=reply_markup)
@@ -1192,6 +1236,71 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="services_main")]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+
+### top processes
+    elif query.data == "process":
+            keyboard = [
+                [
+                    InlineKeyboardButton("Top CPU", callback_data="top_cpu"),
+                    InlineKeyboardButton("Top Memory", callback_data="top_memory"),
+                ],
+                [InlineKeyboardButton("🔙 Back", callback_data="monitoring_main")],
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await query.edit_message_text("Select how to view processes:", reply_markup=reply_markup)
+
+    elif query.data in ["top_cpu", "top_memory"]:
+        sort_by = "cpu" if query.data == "top_cpu" else "memory"
+        top_procs = get_top_processes(sort_by=sort_by)
+        
+        text = f"**Top 5 Processes by {'CPU' if sort_by == 'cpu' else 'Memory'} Usage:**\n\n"
+        keyboard = []
+        for proc in top_procs:
+            text += (
+                f"PID: `{proc['pid']}` | Name: `{proc['name']}` | "
+                f"CPU: `{proc['cpu']:.1f}%` | Mem: `{proc['memory']:.1f}%`\n"
+            )
+            keyboard.append([InlineKeyboardButton(
+                f"Kill PID {proc['pid']}", callback_data=f"kill_process_{proc['pid']}"
+            )])
+        
+        keyboard.append([InlineKeyboardButton("🔙 Back", callback_data="process")])
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+
+    elif query.data.startswith("kill_process_"):
+        pid = int(query.data.split("_")[2])
+        # درخواست تأیید
+        keyboard = [
+            [InlineKeyboardButton("✅ Yes", callback_data=f"confirm_kill_{pid}"),
+             InlineKeyboardButton("❌ No", callback_data="process")],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(
+            f"⚠️ Are you sure you want to kill process with PID `{pid}`?",
+            reply_markup=reply_markup,
+            parse_mode="Markdown"
+        )
+
+    elif query.data.startswith("confirm_kill_"):
+        pid = int(query.data.split("_")[2])
+        try:
+            process = psutil.Process(pid)
+            process.terminate()  
+            if process.is_running():
+                process.kill()  
+            text = f"✅ Process with PID `{pid}` has been terminated."
+        except psutil.NoSuchProcess:
+            text = f"❌ Process with PID `{pid}` not found."
+        except psutil.AccessDenied:
+            text = f"❌ Permission denied to kill process with PID `{pid}`."
+        except Exception as e:
+            text = f"⚠️ Error killing process `{pid}`: {str(e)}"
+        
+        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="process")]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+
 
         ########################### security section #######################
 
