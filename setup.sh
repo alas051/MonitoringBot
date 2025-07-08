@@ -25,9 +25,8 @@ check_and_install_pip() {
 }
 
 echo "🔍 Checking for pip..."
-check_and_install_pip()
+check_and_install_pip
 
-# Install required Python packages
 echo "📦 Installing Python packages..."
 pip3 install --upgrade python-telegram-bot psutil matplotlib speedtest-cli pandas
 if [ $? -ne 0 ]; then
@@ -50,16 +49,16 @@ sed -i "s|ADMIN_USER_ID = [0-9]*|ADMIN_USER_ID = $ADMIN_USER_ID|" "$BOT_FILE"
 sed -i "s|77\.83\.203\.147|$SERVER_IP|g" "$BOT_FILE"
 
 if [ $? -ne 0 ]; then
-    echo "❌ Failed to update this script. Exiting."
+    echo "❌ Failed to update the script. Exiting."
     exit 1
 fi
 
-echo "✅ Script completed successfully."
+echo "✅ Script updated successfully."
 
-REPORT_DIR="$SCRIPT_DIR/osdreports"
+REPORT_DIR="$SCRIPT_DIR/reports"
 mkdir -p "$REPORT_DIR"
 
-sed -i "s|report_dir = \"/root/alertBot/project\"|report_dir =\"$REPORT_DIR\"|" "$BOT_FILE"
+sed -i "s|report_dir = \"/root/alertBot/project\"|report_dir = \"$REPORT_DIR\"|" "$BOT_FILE"
 
 if [ ! -d "$REPORT_DIR" ]; then
     echo "❌ The specified report directory does not exist. Creating it now..."
