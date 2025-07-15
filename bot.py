@@ -76,7 +76,7 @@ CHART_INTERVALS = {
 
 lock = asyncio.Lock()  # Lock to ensure only one task runs at a time
 
-services = ["nginx", "mysql"] 
+services = [] 
 
 # Threshold intervals in seconds
 alert_intervals = {
@@ -863,7 +863,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ])
         service_buttons.append([InlineKeyboardButton("🔙  Back", callback_data="back_to_main")])
         reply_markup = InlineKeyboardMarkup(service_buttons)
-        await query.edit_message_text("Select a service to manage:", reply_markup=reply_markup)
+        await query.edit_message_text("Choose an action to manage your services:", reply_markup=reply_markup)
 
     elif query.data == "manage_users_main":
         if query.from_user.id != ADMIN_USER_ID:
