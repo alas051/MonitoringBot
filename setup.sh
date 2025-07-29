@@ -14,8 +14,8 @@ fi
 
 cd MonitoringBot || { echo "❌ Failed to enter MonitoringBot directory."; exit 1; }
 
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
-BOT_FILE="$SCRIPT_DIR/bot.py"
+# Define bot.py path relative to the current directory (MonitoringBot)
+BOT_FILE="./bot.py"
 
 # Function to check and install pip
 check_and_install_pip() {
@@ -69,7 +69,7 @@ fi
 
 echo "✅ Script updated successfully."
 
-REPORT_DIR="$SCRIPT_DIR/reports"
+REPORT_DIR="./reports"
 mkdir -p "$REPORT_DIR"
 
 sed -i "s|report_dir = \"/root/alertBot/project\"|report_dir = \"$REPORT_DIR\"|" "$BOT_FILE"
