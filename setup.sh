@@ -1,5 +1,19 @@
 #!/bin/bash
 
+# Step 1: Clone the repo and move into it
+if [ ! -d "MonitoringBot" ]; then
+    echo "📥 Cloning the MonitoringBot repository..."
+    git clone https://github.com/alas051/MonitoringBot.git
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to clone the repository. Please check your internet connection or the repo URL."
+        exit 1
+    fi
+else
+    echo "📁 'MonitoringBot' directory already exists. Skipping clone."
+fi
+
+cd MonitoringBot || { echo "❌ Failed to enter MonitoringBot directory."; exit 1; }
+
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 BOT_FILE="$SCRIPT_DIR/bot.py"
 
