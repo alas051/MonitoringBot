@@ -86,23 +86,6 @@ Run pre-approved commands such as:
 
 ---
 
-## Screenshots
-
-> Replace these image paths with your real screenshots stored inside the repository, for example in `/assets`.
-
-### Main dashboard
-![Main Dashboard](./assets/dashboard.png)
-
-### Performance charts
-![Performance Charts](./assets/charts.png)
-
-### Service management
-![Service Management](./assets/services.png)
-
-### Security alerts
-![Security Alerts](./assets/security.png)
-
----
 
 ## Use Cases
 
@@ -142,6 +125,5 @@ Run the setup script directly on your Linux server:
 bash <(curl -Ls https://raw.githubusercontent.com/alas051/MonitoringBot/main/setup.sh)
 
 ---
-![image](https://github.com/user-attachments/assets/b5f7499f-e3da-47f0-a876-2ebb42cfd135)
 
 
