@@ -1,67 +1,149 @@
 ![image](https://github.com/user-attachments/assets/ac376c44-14f2-4db5-bd4d-70015c94287a)
 
-Linux Server Monitoring Telegram Bot
+# Linux Server Monitoring Telegram Bot
 
-# 🚀 Linux Server Monitoring Telegram Bot
+A powerful open-source Telegram bot for monitoring, managing, and securing Linux servers directly from chat.
 
-👋 **Welcome to the Server Monitoring Bot!**
+Monitor server health, control services, receive alerts, inspect network status, manage files, and run safe Linux commands — all from Telegram.
 
-This is a powerful Telegram bot designed to help you monitor, manage, and secure your Linux server with ease. Whether you're tracking system performance, managing services, or ensuring security, this bot provides a seamless and interactive experience right from Telegram!
+![License](https://img.shields.io/github/license/alas051/MonitoringBot)
+![Python](https://img.shields.io/badge/python-3.7%2B-blue)
+![Platform](https://img.shields.io/badge/platform-linux-success)
+![Stars](https://img.shields.io/github/stars/alas051/MonitoringBot?style=social)
+
+---
+
+## Why this project?
+
+Managing a Linux server often means switching between SSH sessions, monitoring dashboards, logs, and alerting tools.
+
+**MonitoringBot** brings the most important server operations into Telegram, so you can:
+
+- check your server status in seconds
+- get notified before issues become outages
+- manage services remotely
+- monitor suspicious login attempts
+- receive performance reports without opening multiple tools
+
+It is designed for developers, sysadmins, VPS owners, and anyone who wants a lightweight, practical server assistant inside Telegram.
+
+---
+
+## Features
+
+### 📊 Server Monitoring
+- Monitor **CPU, memory, disk usage, and uptime** in real-time
+- View performance trends with charts across multiple intervals:
+  - `1m`
+  - `5m`
+  - `1h`
+  - `12h`
+  - `1d`
+
+### 🛠 Service Management
+- Start services
+- Stop services
+- Restart services
+- Check service status
+- Add or remove services from the monitoring list
+
+Supports common Linux services such as:
+- Nginx
+- MySQL
+- Apache
+- Docker
+- and more
+
+### 🌐 Network Tools
+- Run speed tests
+- Check packet loss
+- Monitor network stability and connectivity
+
+### ⚠️ Smart Alerts
+- Receive notifications for:
+  - high CPU usage
+  - low disk space
+  - memory pressure
+  - other critical server conditions
+
+### 🔐 Security Monitoring
+- Detect suspicious login attempts
+- View blocked IPs
+- Block or manage suspicious IP addresses
+
+### 📄 Daily Reports
+- Receive detailed **CSV reports** of server activity and performance over the last 24 hours
+
+### 📂 File Management
+- Upload files
+- Download files
+- Delete files directly from Telegram
+
+### ⌨️ Safe Linux Commands
+Run pre-approved commands such as:
+- `uptime`
+- `df`
+- `free`
+- and other safe system commands
+
+---
+
+## Screenshots
+
+> Replace these image paths with your real screenshots stored inside the repository, for example in `/assets`.
+
+### Main dashboard
+![Main Dashboard](./assets/dashboard.png)
+
+### Performance charts
+![Performance Charts](./assets/charts.png)
+
+### Service management
+![Service Management](./assets/services.png)
+
+### Security alerts
+![Security Alerts](./assets/security.png)
+
+---
+
+## Use Cases
+
+MonitoringBot is useful for:
+
+- **Sysadmins** who want quick server checks from mobile
+- **Developers** managing a VPS or personal server
+- **DevOps engineers** who need lightweight Telegram-based alerts
+- **Security-conscious users** who want login monitoring and IP blocking
+- **Solo founders / indie hackers** who want simple remote server visibility
+
+---
+
+## Feature Overview
+
+| Feature | Status |
+|---|---|
+| CPU / RAM / Disk monitoring | ✅ |
+| Uptime tracking | ✅ |
+| Historical charts | ✅ |
+| Service management | ✅ |
+| Telegram alerts | ✅ |
+| Network tools | ✅ |
+| Security monitoring | ✅ |
+| Daily CSV reports | ✅ |
+| File management | ✅ |
+| Safe command execution | ✅ |
+
+---
+
+## Installation
+
+### Quick Install
+
+Run the setup script directly on your Linux server:
+```bash
+bash <(curl -Ls https://raw.githubusercontent.com/alas051/MonitoringBot/main/setup.sh)
 
 ---
 ![image](https://github.com/user-attachments/assets/b5f7499f-e3da-47f0-a876-2ebb42cfd135)
 
 
-## 🎯 Features
-
-### 📊 Monitor Server Resources
-- Track **CPU, memory, disk usage, and uptime** in real-time.
-- Visualize usage trends with dynamic charts over multiple time intervals (1m, 5m, 1h, 12h, 1d).
-
-### 🛠 Manage Services
-- Start, stop, restart, or check the status of services like **Nginx, MySQL, and more**.
-- Add or remove services to monitor dynamically.
-
-### 🌐 Network Tools
-- Run **speed tests**, check **packet loss**, and monitor **network stability**.
-
-### ⚠️ Custom Alerts
-- Set up notifications for **high CPU usage, low disk space**, and other critical thresholds.
-
-### 🔐 Security Monitoring
-- Detect and block **suspicious login attempts** and manage **blocked IPs**.
-
-### 📄 Daily Server Reports
-- Receive detailed **CSV reports** of server performance over the last 24 hours.
-
-### 📂 File Management
-- **Upload, download, and delete** files from your server easily.
-
-### ⌨️ Run Linux Commands
-- Run **pre-approved Linux commands** (e.g., uptime, df, free) directly via Telegram.
-
----
-
-### 🛠 Installation & Setup
-
-**Prerequisites**
-
-- A Linux server with Python 3.7+ installed.
-- A Telegram bot token (get one from BotFather).
-    
-To set up the bot on your Linux server, follow these steps:
-
-``` bash
-bash <(curl -Ls https://raw.githubusercontent.com/alas051/MonitoringBot/main/setup.sh)
-```
-Then you should enter your Telegram bot token, the admin's chat ID, and your Linux server IP address.
-
-## 📜 License
-
-This project is licensed under the MIT License. Feel free to use, modify, and distribute it as you see fit!
-
-## 📬 Contact
-
-Have questions or suggestions? Open an issue or reach out to alas051.
-
-**⭐ Star this repo if you find it useful! ⭐**
