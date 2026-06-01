@@ -123,7 +123,3 @@ MonitoringBot is useful for:
 Run the setup script directly on your Linux server:
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/alas051/MonitoringBot/main/setup.sh)
-
----
-
-
